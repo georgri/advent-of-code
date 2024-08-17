@@ -220,6 +220,80 @@ text_test = """
 10R5L5R10L4R5L5
 """
 
+""" test
+   0 1 2 3
+   -------
+0: 0 0 1
+1: 1 1 1
+2: 0 0 1 1
+"""
+# 0 for right (>), 1 for down (v), 2 for left (<), and 3 for up (^)
+dirs_test = { 
+    (0, 2, 3): (1, 0, 1),
+    (0, 2, 0): (2, 3, 2),
+    (0, 2, 2): (1, 1, 1),
+    (1, 0, 3): (0, 2, 1),
+    (1, 0, 1): (2, 2, 3),
+    (1, 0, 2): (2, 3, 3),
+    (1, 1, 3): (0, 2, 0), 
+    (1, 1, 1): (2, 2, 0),
+    (1, 2, 0): (2, 3, 1),
+    (2, 2, 1): (1, 0, 3),
+    (2, 2, 2): (1, 1, 3),
+    (2, 3, 3): (1, 2, 2),
+    (2, 3, 0): (0, 2, 2),
+    (2, 3, 1): (1, 0, 0)
+}
+
+""" prod
+   0 1 2
+   -----
+0: 0 1 1
+1: 0 1
+2: 1 1
+3: 1
+"""
+# 0 for right (>), 1 for down (v), 2 for left (<), and 3 for up (^)
+dirs_prod = {
+    (0, 1, 3): (3, 0, 0),
+    (0, 1, 2): (2, 0, 0),
+    (0, 2, 3): (3, 0, 3),
+    (0, 2, 0): (2, 1, 2),
+    (0, 2, 1): (1, 1, 2),
+    (1, 1, 0): (0, 2, 3),
+    (1, 1, 2): (2, 0, 1),
+    (2, 0, 3): (1, 1, 0),
+    (2, 0, 2): (0, 1, 0),
+    (2, 1, 0): (0, 2, 2),
+    (2, 1, 1): (3, 0, 2),
+    (3, 0, 0): (2, 1, 3),
+    (3, 0, 1): (0, 2, 1),
+    (3, 0, 2): (0, 1, 1)
+} 
+
+text_test2 = """
+    ...#...#
+    .#...#..
+    #...#...
+    ........
+    ...#
+    .#..
+    #...
+    ....
+...#....
+........
+..#....#
+........
+...#
+....
+.#..
+....
+
+10R5L5R7R3
+"""
+
+
+
 
 def parse(text):
     m = []
@@ -271,6 +345,62 @@ def trymove(m, x, y, xo, yo):
     return x, y
 
 
+def trymove2(m, x, y, curdir, cubesize, dirs):
+    xorig, yorig = x, y
+
+    xo, yo = [(0, 1), (1, 0), (0, -1), (-1, 0)][curdir]
+    x, y = (x + xo), (y + yo)
+
+    #print(x, y, curdir)
+    if 0 <= x < len(m) and 0 <= y < len(m[x]):
+        if m[x][y] == '.':
+            return x, y, curdir
+        elif m[x][y] == '#':
+            return xorig, yorig, curdir
+
+    x,y = xorig, yorig
+
+    # warp xorig, yorig, curdir!!!
+
+    facex, facey = x // cubesize, y // cubesize
+
+    offset = 0
+    if curdir == 3: # up
+        offset = y % cubesize
+    elif curdir == 1: # down
+        offset = cubesize - 1 - (y % cubesize)
+    elif curdir == 0: # right
+        offset = x % cubesize
+    elif curdir == 2: # left
+        offset = cubesize - 1 - (x % cubesize)
+
+    newfacex, newfacey, newdir = dirs[(facex, facey, curdir)]
+
+    # restore coords from faces, newdir and offset
+    xbase, ybase = newfacex * cubesize, newfacey * cubesize
+
+    if newdir == 3: # up
+        x = xbase + cubesize-1
+        y = ybase + offset
+    elif newdir == 1: # down:
+        x = xbase
+        y = ybase + cubesize - 1 - offset
+    elif newdir == 0: # right
+        x = xbase + offset
+        y = ybase
+    elif newdir == 2: # left
+        x = xbase + cubesize - 1 - offset
+        y = ybase + cubesize - 1
+
+    if m[x][y] == '.':
+        #print(x, y, newdir, facex, facey, newfacex, newfacey, xbase, ybase)
+        return x, y, newdir
+    elif m[x][y] == '#':
+        return xorig, yorig, curdir
+    else:
+        return None #should not be here!
+
+
 def godir(m, x, y, curdir, inst):
     xo, yo = [(0, 1), (1, 0), (0, -1), (-1, 0)][curdir]
 
@@ -278,6 +408,18 @@ def godir(m, x, y, curdir, inst):
         x, y = trymove(m, x, y, xo, yo)
 
     return x, y
+
+
+def godir2(m, x, y, curdir, inst, cubesize, dirs):
+    #print(curdir, inst)
+    for _ in range(inst):
+        x, y, curdir = trymove2(m, x, y, curdir, cubesize, dirs)
+
+        #print(x,y, curdir, m[x][y])
+
+
+    return x, y, curdir
+
 
 
 def run(text):
@@ -308,11 +450,11 @@ def run(text):
     print((x + 1) * 1000 + (y + 1) * 4 + curdir)
 
 
-#run(text)
+run(text)
 
 
 
-def run2(text):
+def run2(text, dirs):
     instructions, m = parse(text)
 
     cubesize = 0
@@ -321,21 +463,6 @@ def run2(text):
     cubesize = int((cubesize // 6) ** 0.5)
 
     print(cubesize)
-
-    # # зафигачить разметку граней 1-2-3-4-5-6
-    # numberedmap = []
-    # currentside = 0
-    # currentrow = 0
-    # for i, line in enumerate(m):
-    #     row = i // cubesize
-    #     if row > currentrow:
-    #         currentside += len(m[i-1].strip())//cubesize
-    #         currentrow = row
-    #
-    #     sides = len(m[i].strip())//cubesize
-    #
-
-    # 
 
     # ищем стартовую точку
     x, y = 0, 0
@@ -351,7 +478,7 @@ def run2(text):
     for inst in instructions:
         if isinstance(inst, int):
             # переместиться в направлении curdir
-            x, y, curdir = godir2(m, x, y, curdir, inst, cubesize)
+            x, y, curdir = godir2(m, x, y, curdir, inst, cubesize, dirs)
         else:
             # изменить направление
             if inst == 'L':
@@ -362,4 +489,6 @@ def run2(text):
     print((x + 1) * 1000 + (y + 1) * 4 + curdir)
 
 
-run2(text_test)
+#run2(text_test2, dirs_prod)
+
+run2(text, dirs_prod)
