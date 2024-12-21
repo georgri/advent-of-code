@@ -56,55 +56,20 @@ def findChar(m, c):
     return None
         
 def shortest(m, a,b, version):
-    if version == 0:
-        if a == b:
-            return "A"
-        xa,ya = findChar(m, a)
-        xb,yb = findChar(m, b)
-
-        xo, yo = xb-xa, yb-ya
-        res = ""
-        if m[xa][ya+yo] != ' ':
-            if yo < 0:
-                res += '<' * abs(yo)
-            else:
-                res += '>' * abs(yo)
-
-        if xo < 0:
-            res +=  '^' * abs(xo)
-        else:
-            res += 'v' * abs(xo)
-        if m[xa][ya+yo] == ' ':
-            if yo < 0:
-                res += '<' * abs(yo)
-            else:
-                res += '>' * abs(yo)
-        res += 'A'
-        return res
-      
     if a == b:
         return "A"
     xa,ya = findChar(m, a)
     xb,yb = findChar(m, b)
-
     xo, yo = xb-xa, yb-ya
     res = ""
-    if m[xa+xo][ya] != ' ':
-        if xo < 0:
-            res +=  '^' * abs(xo)
-        else:
-            res += 'v' * abs(xo)
-    if yo < 0:
-        res += '<' * abs(yo)
-    else:
-        res += '>' * abs(yo)
-    if m[xa+xo][ya] == ' ':
-        if xo < 0:
-            res +=  '^' * abs(xo)
-        else:
-            res += 'v' * abs(xo)
-    res += 'A'
-    return res
+
+    xs = "^v"[int(xo >= 0)] * abs(xo)
+    ys = "<>"[int(yo >= 0)] * abs(yo)
+
+    if version == 0 and m[xa+xo][ya] != ' ' or m[xa][ya+yo] == ' ':
+        return xs+ys+'A'
+      
+    return ys+xs+'A'
 
 def shortestKeyPad(a,b, version):
     return shortest(keyPad, a,b, version)
@@ -158,7 +123,7 @@ def solve(text):
     return res
 
 
-print(solve(text_test))
+print(solve(text))
 
 
 def solve2(text):
