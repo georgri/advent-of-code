@@ -61,7 +61,6 @@ def shortest(m, a,b, version):
     xa,ya = findChar(m, a)
     xb,yb = findChar(m, b)
     xo, yo = xb-xa, yb-ya
-    res = ""
 
     xs = "^v"[int(xo >= 0)] * abs(xo)
     ys = "<>"[int(yo >= 0)] * abs(yo)
@@ -71,21 +70,15 @@ def shortest(m, a,b, version):
       
     return ys+xs+'A'
 
-def shortestKeyPad(a,b, version):
-    return shortest(keyPad, a,b, version)
-
-def shortestMovePad(a,b, version):
-    return shortest(movePad, a,b, version)
-
 from functools import cache
 
 @cache
 def move(a,b, depth, version, initial):
     if initial:
-        f = shortestKeyPad
+        m = keyPad
     else:
-        f = shortestMovePad
-    presses = f(a,b, version)
+        m = movePad
+    presses = shortest(m, a,b, version)
     if depth == 0:
         return len(presses)
 
@@ -100,33 +93,25 @@ def enter(code, depth, initial):
 
 
 
-def solve(text):
+def solve(text, depth):
     codes = read_input(text)
 
     res = 0
     
     for code in codes:
-        moves = enter(code,2, True)
+        moves = enter(code,depth, True)
         print(code, moves)
         res += int(code[:-1]) * moves
 
     return res
 
+def solve1(text):
+    return solve(text,2)
 
-print(solve(text))
-
+print(solve1(text))
 
 def solve2(text):
-    codes = read_input(text)
-
-    res = 0
-    
-    for code in codes:
-        moves = enter(code,25, True)
-        print(code, moves)
-        res += int(code[:-1]) * moves
-
-    return res
+    return solve(text, 25)
 
 
 print(solve2(text))
