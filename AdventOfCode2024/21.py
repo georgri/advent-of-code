@@ -78,34 +78,24 @@ def shortestMovePad(a,b, version):
     return shortest(movePad, a,b, version)
 
 from functools import cache
+
 @cache
-def moveMove(a,b, depth, version):
-    presses = shortestMovePad(a,b, version)
+def move(a,b, depth, version, initial):
+    if initial:
+        f = shortestKeyPad
+    else:
+        f = shortestMovePad
+    presses = f(a,b, version)
     if depth == 0:
         return len(presses)
 
-    moves = 0
-    for x,y in zip('A' + presses, presses):
-        moves += min(moveMove(x,y, depth -1, 0), moveMove(x,y, depth-1, 1))
-    return moves
+    return enter(presses, depth-1, False)
 
 @cache
-def move(a,b, depth, version):
-    presses = shortestKeyPad(a,b, version)
-    if depth == 0:
-        return len(presses)
-
+def enter(code, depth, initial):
     moves = 0
-    for x,y in zip('A' + presses, presses):
-        moves += min(moveMove(x,y, depth -1, 0), moveMove(x,y, depth-1, 1))
-    return moves
-
-
-def enter(code, depth):
-    moves = 0
-    code = 'A' + code
-    for a,b in zip(code, code[1:]):
-        moves += min(move(a,b, depth, 0), move(a,b,depth,1))
+    for a,b in zip('A' + code, code):
+        moves += min(move(a,b, depth, 0, initial), move(a,b,depth,1, initial))
     return moves
 
 
@@ -116,7 +106,7 @@ def solve(text):
     res = 0
     
     for code in codes:
-        moves = enter(code,2)
+        moves = enter(code,2, True)
         print(code, moves)
         res += int(code[:-1]) * moves
 
@@ -132,7 +122,7 @@ def solve2(text):
     res = 0
     
     for code in codes:
-        moves = enter(code,25)
+        moves = enter(code,25, True)
         print(code, moves)
         res += int(code[:-1]) * moves
 
