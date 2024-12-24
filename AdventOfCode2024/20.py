@@ -187,6 +187,8 @@ def adj(m,x,y):
             yield x+xo, y+yo
 
 def bfs(m, sx, sy, tx, ty):
+    if (sx,sy) == (tx,ty):
+        return 0
 
     prev = [(sx,sy)]
 
@@ -209,6 +211,7 @@ def bfs(m, sx, sy, tx, ty):
         prev = cur
 
     return -1
+
 
 def solve(text):
     m = read_input(text)
@@ -251,5 +254,77 @@ def solve(text):
     return total
 
 
+def bfs_full(m, sx, sy):
+    res = [[-1] * len(m[0]) for _ in range(len(m))]
+    res[sx][sy] = 0
 
-print(solve(text))
+    prev = [(sx,sy)]
+
+    visited = set()
+    visited.add((sx,sy))
+    moves = 0
+
+    while prev:
+        cur = []
+        moves += 1
+        for x,y in prev:
+            for a,b in adj(m, x,y):
+                if m[a][b] == '#' or (a,b) in visited:
+                    continue
+                res[a][b] = moves
+                visited.add((a,b))
+                cur.append((a,b))
+
+        prev = cur
+
+    return res
+
+
+def adj_manhatten(m, x, y, max_dist):
+    for xo in range(-max_dist, max_dist+1):
+        for yo in range(-max_dist, max_dist+1):
+            if abs(xo) + abs(yo) <= max_dist and 0 <= x + xo < len(m) and 0 <= y + yo < len(m[0]):
+                yield x+xo, y + yo, abs(xo) + abs(yo)
+
+
+def solve2(text):
+    m = read_input(text)
+    for i, row in enumerate(m):
+        m[i] = list(row)
+
+    sx,sy = find_char(m, 'S')
+    tx,ty = find_char(m, 'E')
+    m[sx][sy] = '.'
+
+    no_cheats = bfs(m, sx, sy, tx, ty)
+    print(no_cheats)
+
+    res = defaultdict(int)
+
+    from_start = bfs_full(m, sx,sy)
+    to_finish = bfs_full(m, tx, ty)
+
+    for i, row in enumerate(m):
+        for j, c in enumerate(row):
+            fs = from_start[i][j]
+            if fs == -1:
+                continue
+
+            # get all the manhatten distance <= 20
+            for a,b, dist in adj_manhatten(m, i,j, 20):
+                tf = to_finish[a][b]
+                if tf == -1:
+                    continue
+
+                r = fs + dist + tf
+                if r < no_cheats:
+                    res[no_cheats - r] += 1
+
+    total = 0
+    for k,v in res.items():
+        if k >= 100:
+            total += v
+
+    return total
+
+print(solve2(text))
